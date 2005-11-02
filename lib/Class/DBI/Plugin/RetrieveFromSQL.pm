@@ -3,7 +3,7 @@ package Class::DBI::Plugin::RetrieveFromSQL;
 use strict;
 use warnings;
 use vars qw($VERSION);
-$VERSION = '0.01';
+$VERSION = '0.02';
 
 sub import {
     my $class = shift;
@@ -19,9 +19,13 @@ sub import {
         if (ref $vals[0] ne 'HASH') {
             return $self->$super($sql, @vals)
         } else {
-            my $h_ref = $vals[0];
+            my %hargs = %{$vals[0]};
             my @args;
-            $sql =~ s{:([A-Za-z][A-Za-z0-9]*)}{push @args, $$h_ref{$1}; '?'}ge;
+            $sql =~ s{:([A-Za-z_][A-Za-z0-9_]*)}{
+                die "$1 is not exists in hash" if !exists $hargs{$1};
+                push @args, $hargs{$1};
+                '?'
+            }ge;
             return $self->$super($sql, @args);
         }
     };
@@ -42,7 +46,7 @@ Class::DBI::Plugin::RetrieveFromSQL - readable retrieve_from_sql plugin for Clas
 
   package Main;
   my @cds = Music::CD->retrieve_from_sql(qq{
-    artist =    :artist AND
+    (artist =    :artist OR artist2 = :artist) AND
     title  like :title  AND
     year   <=   :year
     ORDER BY year
@@ -51,12 +55,12 @@ Class::DBI::Plugin::RetrieveFromSQL - readable retrieve_from_sql plugin for Clas
 
   # This does the equivalent of:
   my @cds = Music::CD->retrieve_from_sql(qq{
-    artist =    ? AND
+    (artist =   ?  OR artist2 = ?) AND
     title  like ?  AND
     year   <=   ?
     ORDER BY year
     LIMIT 2,3
-  }, 'Ozzy Osbourne', '%Crazy', 1986);
+  }, 'Ozzy Osbourne', 'Ozzy Osbourne', '%Crazy', 1986);
 
 =head1 DESCRIPTION
 
@@ -67,7 +71,7 @@ If you use this plugin, you can use the hash!
 
 =head1 AUTHOR
 
-MATSUNO Tokuhiro E<lt>tokuhirom at mobilefactory.jpE<gt>
+MATSUNO Tokuhiro E<lt>tokuhiro at mobilefactory.jpE<gt>
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

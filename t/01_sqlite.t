@@ -5,7 +5,7 @@ $| = 1;
 
 BEGIN {
     eval "use DBD::SQLite";
-    plan $@ ? (skip_all => 'needs DBD::SQLite for testing') : (tests => 8);
+    plan $@ ? (skip_all => 'needs DBD::SQLite for testing') : (tests => 9);
 }
 
 {
@@ -66,3 +66,10 @@ is($user->address, 'meguro', 'address ok');
 my $user_orig = User->retrieve_from_sql('name = ? AND tel = ?', 'tony', '052-2222-5325')->first;
 ok($user_orig, 'retrieve_from_sql original');
 is($user_orig->address, 'meguro', 'address ok');
+
+eval {
+    my $user = User->retrieve_from_sql(
+        q{name = :nam}, {name => 'hoge'}
+    )->first;
+};
+like($@, qr(nam is not exists in hash), "error detect");
