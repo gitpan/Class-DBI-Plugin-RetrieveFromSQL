@@ -1,9 +1,7 @@
 package Class::DBI::Plugin::RetrieveFromSQL;
-
 use strict;
 use warnings;
-use vars qw($VERSION);
-$VERSION = '0.02';
+our $VERSION = '0.03';
 
 sub import {
     my $class = shift;

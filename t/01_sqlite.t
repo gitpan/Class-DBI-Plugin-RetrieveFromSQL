@@ -4,36 +4,23 @@ use Test::More;
 $| = 1;
 
 BEGIN {
-    eval "use DBD::SQLite";
-    plan $@ ? (skip_all => 'needs DBD::SQLite for testing') : (tests => 9);
+    eval "use Class::DBI::Test::SQLite; use DBD::SQLite;";
+    plan $@ ? (skip_all => 'needs Class::DBI::Test::SQLite, DBD::SQLite for testing') : (tests => 6);
 }
 
 {
     package User;
-    use base qw(Class::DBI);
-    use strict;
-    use warnings;
+    use base qw/Class::DBI::Test::SQLite/;
     use Class::DBI::Plugin::RetrieveFromSQL;
-
-    use File::Temp qw/tempfile/;
-    my (undef, $DB) = tempfile();
-    my @DSN = ('Main', "dbi:SQLite:dbname=$DB", '', '', { AutoCommit => 1 });
-
-    END { unlink $DB if -e $DB }
-
-    __PACKAGE__->set_db(@DSN);
-    __PACKAGE__->table('user');
+    __PACKAGE__->set_table('user');
     __PACKAGE__->columns(All     => qw(name tel address));
 
-    sub create_table {
-        my $class = shift;
-        $class->db_Main->do(q{
-            CREATE TABLE user (
-                name    VARCHAR(255) NOT NULL,
-                tel     VARCHAR(255) NOT NULL,
-                address VARCHAR(255) NOT NULL
-            )
-        });
+    sub create_sql {
+        q{
+            name    VARCHAR(255) NOT NULL,
+            tel     VARCHAR(255) NOT NULL,
+            address VARCHAR(255) NOT NULL
+        }
     }
 
     sub set_data {
@@ -51,9 +38,8 @@ BEGIN {
     }
 }
 
-ok(User->create_table, 'create table');
-ok(User->can('db_Main'), 'set_db()');
-is(User->__driver, "SQLite", "Driver set correctly");
+package main;
+
 ok(User->set_data, 'set_data');
 
 my $user = User->retrieve_from_sql(

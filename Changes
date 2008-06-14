@@ -1,5 +1,11 @@
 Revision history for Perl extension Class::DBI::Plugin::RetrieveFromSQL
 
+0.03
+
+    - rewrite test with C::P::SQLite
+    - use Module::Install
+    - fixed deps for CDBI :(
+
 0.02  Sun Oct 30 15:46:48 2005
         - error detect.
         - allow under bar in ident.
